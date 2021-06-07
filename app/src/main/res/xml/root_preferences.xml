@@ -1,0 +1,24 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/opinion_header">
+
+        <ListPreference
+            app:defaultValue="72 zmaniyot minutes"
+            app:entries="@array/opinion_entries"
+            app:entryValues="@array/opinion_values"
+            app:key="opinion"
+            app:title="@string/opinion_title"
+            app:summary="Choose which opinion to calculate with."/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/contact_header">
+
+        <Preference
+            app:title="@string/contact_header"
+            app:selectable="true"
+            app:key="@string/contact_header"/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

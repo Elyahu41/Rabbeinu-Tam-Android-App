@@ -1,0 +1,204 @@
+<resources>
+    <string name="app_name">Rabbeinu Tam</string>
+    <string name="Today">Today</string>
+    <string name="specify">Specify Date</string>
+    <string name="shabbat">Shabbat</string>
+    <string name="shabbat_he">שבת</string>
+    <string name="title_location_permission">No location permission</string>
+    <string name="text_location_permission">
+        This app needs to have permission in order to find your location.
+        This app will not work until you allow it to see your location.</string>
+    <string name="ok">OK</string>
+    <string name="setup_elevation">Setup Elevation</string>
+    <string name="mishor_request">If you want to use Mishor (Sea Level) Sunset for your calculations
+        of Rabbeinu Tam, just press the button below:</string>
+    <string name="mishor_sea_level">Mishor (Sea Level)</string>
+    <string name="manual_button">If you want to specify the elevation level (in meters) yourself,
+        press this button:</string>
+    <string name="manual">Manual</string>
+    <string name="chaitables_request">If you want to get this information from chaitables.com,
+        press this button:</string>
+    <string name="chaitables">ChaiTables</string>
+    <string name="long_explanation">Some opinions hold that the actual sunset that should be used
+        for calculating zmanim is when sunset is seen at the highest point in the city.
+        However, some do not hold of this opinion. Therefore, I left this part up to the user.
+        Note that elevation does NOT affect degree based zmanim.</string>
+    <string name="choose_date">Choose Date</string>
+    <string name="specific_explanation">Press the button below to find out when Rabbeinu Tam is for
+        a certain date:</string>
+    <string name="about">About</string>
+    <string name="settings">Settings</string>
+    <string name="how_the_calculations_work">How the calculations work</string>
+    <string name="re_run_setup">Re-run Setup</string>
+    <string name="title_activity_about">About Activity</string>
+    <string name="about_text">
+        "Why I created this app.\n\n"
+
+        "I created this app because I did not want to calculate manually when Rabbeinu Tam is"
+        "every week. Since I learnt how to calculate Rabbeinu tam, I have been doing it in my head"
+        "every week, however, I realized that I could just create an application to do the"
+        "calculations for me, therefore, I set out to create this app.\n"
+        "However, once I saw that I was doing all the work anyway, I decided to expand my app to"
+        "include more opinions (shitot).\n\n"
+
+        "What's the deal with elevation?.\n\n"
+
+        "I added elevation input into this application because there are many opinions that hold"
+        "that elevation should be included into the calculations. As obviously, the length of the"
+        "day will be longer the higher the person is, since he is able to see the sun for a longer"
+        "period of time. In Yerushalayim (Jerusalem), elevation makes sunrise and sunset around 7"
+        "minutes earlier/later. However, not everyone takes this into account. Many opinions just"
+        "calculate sunrise and sunset from sea level (Mishor).\n"
+        "There are also opinions that use the degrees of the sun under or over the horizon. These"
+        "opinions do not care about elevation of the person, rather where the sun is in the sky."
+        "If you are using these opinions for your calculations, you can just choose the mishor"
+        "(sea level) option and it will ignore elevation.\n"
+        "Because of these many opinions, I just left the option to add elevation up to the user."
+        "\n\n"
+
+        "There is already a zmanim android app, why did you create another app?\n\n"
+
+        "Two reasons: First of all, I wanted the practice of creating an android application."
+        "Second of all, my app includes elevation in the calculations of Rabbeinu tam."
+        "Whereas, other zmanim apps only include elevation for sunrise and sunset but NOT for the"
+        "calculations of Rabbeinu tam and other opinions.\n\n"
+
+        "Why did I get a pop up when I traveled to another place?\n\n"
+
+        "Since elevation changes from city to city, and we need to find the highest visible place"
+        "in the city for our calculations. I added a feature that checks the current name of the"
+        "place you are located at, and the app checks every time you start the app whether you are"
+        "in the same city. This feature is not perfect and it might be more annoying than helpful."
+        "\nTherefore, you can choose to never get asked again about this issue."
+
+    </string>
+    <string name="calc_explanation_text">
+        "Listed below are the details of how each opinion is calculated.\n\n"
+        "All of the calculations use the KosherJava API.\n\n"
+        "Please note that all the times are rounded up to the nearest minute. Whereas sunset is not"
+        "rounded at all, rather the seconds are cut off.\n\n"
+        "If you want an opinion added to the app, please feel free to contact me through the email"
+        "button above.\n\n"
+
+        "72 Zmaniyot Minutes:\n\n"
+
+        "This opinion is calculated as 72 zmaniyot (seasonal/temporal) minutes, or 1/10th of the"
+        "day after sunset (elevation included). This is the default selected opinion of the app"
+        "when you first install the app. The Ohr HaChaim calendar in Israel uses this calculation,"
+        "with elevation included, to calculate sof zman Rabbeinu Tam according to Rabbi Ovadiah"
+        "Yosef ZT\"L. The actual times will be off by a minute or two or more from the calendar"
+        "itself. Here are two reasons as to why the times might be off:"
+        "1.) The calendar was written in an older programming language. 2.) The KosherJava API"
+        "uses different algorithms to get sunrise/sunset, and including elevation also has multiple"
+        "different algorithms to it as well. I have left everything to their default settings."
+        "This is also the way that the Minchat Cohen in Ma'amar 2:4 calculates Rebbeinu Tam's time"
+        "of tzait hacochavim, where each Mil, out of 4, is 18 minutes. The calculation takes the"
+        "time between sunrise and sunset and divides it by 12 to get a zmaniyot hour, and then we"
+        "take 1.2 of that hour and add it to sunset. Alternatively, you could take the amount of"
+        "time between sunrise and sunset and divide it by 10, which will give you a 10th of the day"
+        "(which is also 72 minutes), and add that to sunset.\n\n"
+
+        "90 Zmaniyot Minutes:\n\n"
+
+        "This opinion is calculated as 90 zmaniyot (seasonal/temporal) minutes, or 1/8th of the"
+        "day after sunset (elevation included). This is where each Mil, out of 4, is 22.5"
+        "minutes. The calculation takes the time between sunrise and sunset and divides"
+        "it by 12 to get a zmaniyot hour, and then we take 1.5 of that hour and add it to sunset."
+        "Alternatively, you could take the amount of time between sunrise and sunset and divide it"
+        "by 8, which will give you an 8th of the day (which is also 90 minutes), and add that to"
+        "sunset.\n\n"
+
+        "96 Zmaniyot Minutes:\n\n"
+
+        "This opinion is calculated as 96 zmaniyot (seasonal/temporal) minutes, or 1/7.5th of the"
+        "day after sunset (elevation included). This is where each Mil, out of 4, is 24"
+        "minutes. The calculation takes the time between sunrise and sunset and divides"
+        "it by 12 to get a zmaniyot hour, and then we take 1.6 of that hour and add it to sunset."
+        "Alternatively, you could take the amount of time between sunrise and sunset and divide it"
+        "by 7.5, which will give you 7.5th of the day (which is also 96 minutes), and add that to"
+        "sunset.\n\n"
+
+        "120 Zmaniyot Minutes:\n\n"
+
+        "This opinion is calculated as 120 zmaniyot (seasonal/temporal) minutes, or 1/6th of the"
+        "day after sunset (elevation included). This is based on the opinion of the Magen Avraham"
+        "that the time to walk the distance of a Mil according to the Rambam's opinion is 2/5 of an"
+        "hour (24 minutes) for a total of 120 minutes based on the opinion of Ula. This is where"
+        "each Mil, out of 5, is 24 minutes. The calculation takes the time between sunrise and"
+        "sunset and divides it by 12 to get a zmaniyot hour, and then we take 2 of those hours and"
+        "add it to sunset. Alternatively, you could take the amount of time between sunrise and"
+        "sunset and divide it by 6, which will give you a 6th of the day (which is also 120"
+        "minutes), and add that to sunset.\n\n"
+
+        "50 Regular Minutes:\n\n"
+
+        "This is the opinion of Rabbi Moshe Feinstein and should only be used in New York, USA."
+        "This opinion is calculated as 50 regular minutes after sunset.\n\n"
+
+        "60 Regular Minutes:\n\n"
+
+        "This is the opinion of the Chavas Yair and the Divrei Malkiel."
+        "This opinion is calculated as 60 regular minutes after sunset (elevation included)."
+        "Where each Mil, out of 4, is 15 minutes.\n\n"
+
+        "72 Regular Minutes:\n\n"
+
+        "This opinion is calculated as 72 regular minutes after sunset (elevation included)."
+        "This is according to the Machtzit Hashekel and the Pri Megadim. Where each Mil, out of 4,"
+        "is 18 minutes.\n\n"
+
+        "90 Regular Minutes:\n\n"
+
+        "This opinion is calculated as 90 regular minutes after sunset (elevation included)."
+        "This is according to the Magen Avraham according to the Rambam's opinion where each Mil is"
+        "18 minutes and according to Ula who says that there are 5 Mil between sunset and Tzait."
+        "\n\n"
+
+        "96 Regular Minutes:\n\n"
+
+        "This opinion is calculated as 96 regular minutes after sunset (elevation included)."
+        "Where each Mil, out of 4, is 24 minutes.\n\n"
+
+        "120 Regular Minutes:\n\n"
+
+        "This opinion is calculated as 120 regular minutes after sunset (elevation included)."
+        "This is according to the Magen Avraham according to the Rambam's opinion where each Mil is"
+        "24 minutes, or 2/5th of an hour, and applies it to Ula who says that there are 5 Mil"
+        "between sunset and Tzait.\n\n"
+
+        "16.1 Degrees:\n\n"
+
+        "This calculation is based on the same calculation of 72 minutes but uses a degree based"
+        "calculation instead of 72 exact minutes."
+        "This calculates the time of tzait at the point when the sun is 16.1° below the horizon."
+        "This is the sun's dip below the horizon 72 minutes after sunset according Rabbeinu Tam's"
+        "calculation of tzait around the equinox in Jerusalem.\n\n"
+
+        "18 Degrees:\n\n"
+
+        "This calculates the time of tzait at the point when the sun is 18° below the horizon.\n\n"
+
+        "19.8 Degrees:\n\n"
+
+        "This calculation is based on the same calculation of 90 minutes but uses a degree based"
+        "calculation instead of 90 exact minutes."
+        "This calculates the time of tzait at the point when the sun is 19.8° below the horizon."
+        "This is the sun's dip below the horizon 90 minutes after sunset according Rabbeinu Tam's"
+        "calculation of tzait around the equinox in Jerusalem.\n\n"
+
+        "26 Degrees:\n\n"
+
+        "This calculation is based on the same calculation of 120 minutes but uses a degree based"
+        "calculation instead of 120 exact minutes."
+        "This calculates the time of tzait at the point when the sun is 26° below the horizon."
+        "This is the sun's dip below the horizon 120 minutes after sunset according Rabbeinu Tam's"
+        "calculation of tzait around the equinox in Jerusalem.\n\n"
+    </string>
+
+    <string name="opinion_header">Opinion (Shita)</string>
+    <string name="contact_header">Contact the developer</string>
+    <string name="opinion_title">Opinion to use</string>
+    <string name="title_activity_calc_explanations">CalcExplanationActivity</string>
+    <string name="help">Help</string>
+    <string name="email">Email</string>
+</resources>

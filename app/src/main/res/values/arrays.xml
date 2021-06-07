@@ -1,0 +1,36 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="opinion_entries">
+        <item>72 zmaniyot minutes</item>
+        <item>90 zmaniyot minutes</item>
+        <item>96 zmaniyot minutes</item>
+        <item>120 zmaniyot minutes</item>
+        <item>50 regular minutes (NY Only)</item>
+        <item>60 regular minutes</item>
+        <item>72 regular minutes</item>
+        <item>90 regular minutes</item>
+        <item>96 regular minutes</item>
+        <item>120 regular minutes</item>
+        <item>16.1 degrees</item>
+        <item>18 degrees</item>
+        <item>19.8 degrees</item>
+        <item>26 degrees</item>
+    </string-array>
+
+    <string-array name="opinion_values">
+        <item>72 zmaniyot minutes</item>
+        <item>90 zmaniyot minutes</item>
+        <item>96 zmaniyot minutes</item>
+        <item>120 zmaniyot minutes</item>
+        <item>50 regular minutes (NY Only)</item>
+        <item>60 regular minutes</item>
+        <item>72 regular minutes</item>
+        <item>90 regular minutes</item>
+        <item>96 regular minutes</item>
+        <item>120 regular minutes</item>
+        <item>16.1 degrees</item>
+        <item>18 degrees</item>
+        <item>19.8 degrees</item>
+        <item>26 degrees</item>
+    </string-array>
+</resources>

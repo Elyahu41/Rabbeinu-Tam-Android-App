@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.elyjacobi.rabbeinutam">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_descriptor"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name="com.elyjacobi.rabbeinutam.Activities.CalcExplanationsActivity"
+            android:label="@string/title_activity_calc_explanations"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.elyjacobi.rabbeinutam.Activities.MainActivity" />
+        </activity>
+        <activity
+            android:name="com.elyjacobi.rabbeinutam.Activities.SettingsActivity"
+            android:label="@string/settings">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.elyjacobi.rabbeinutam.Activities.MainActivity" />
+        </activity>
+        <activity
+            android:name="com.elyjacobi.rabbeinutam.Activities.AboutActivity"
+            android:label="@string/title_activity_about"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.elyjacobi.rabbeinutam.Activities.MainActivity" />
+        </activity>
+        <activity android:name="com.elyjacobi.rabbeinutam.Activities.SetupActivity" />
+        <activity
+            android:name="com.elyjacobi.rabbeinutam.Activities.MainActivity"
+            android:theme="@style/SplashTheme"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

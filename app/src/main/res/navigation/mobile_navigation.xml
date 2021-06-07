@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_today">
+
+    <fragment
+        android:id="@+id/navigation_today"
+        android:name="com.elyjacobi.rabbeinutam.ui.today.TodayFragment"
+        android:label="@string/Today"
+        tools:layout="@layout/fragment_today" />
+
+    <fragment
+        android:id="@+id/navigation_specify"
+        android:name="com.elyjacobi.rabbeinutam.ui.specify.SpecifyFragment"
+        android:label="@string/specify"
+        tools:layout="@layout/fragment_specify" />
+
+    <fragment
+        android:id="@+id/navigation_shabbat"
+        android:name="com.elyjacobi.rabbeinutam.ui.shabbat.ShabbatFragment"
+        android:label="@string/shabbat_he"
+        tools:layout="@layout/fragment_shabbat" />
+</navigation>
