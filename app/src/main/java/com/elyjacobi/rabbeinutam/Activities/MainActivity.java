@@ -1,12 +1,10 @@
 package com.elyjacobi.rabbeinutam.Activities;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -17,6 +15,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -44,6 +43,9 @@ import java.util.TimeZone;
 
 import us.dustinj.timezonemap.TimeZoneMap;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
     private double mLatitude;
@@ -55,19 +57,24 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private TimeZoneMap mTimeZoneMap;
     private ActivityResultLauncher<Intent> setupLauncher;
     public static final String SHARED_PREF = "MyPrefsFile";
+    private SharedPreferences mSharedPreferences;
+    private NavController mNavController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme);//splash screen
         super.onCreate(savedInstanceState);
+        mSharedPreferences = getSharedPreferences(SHARED_PREF, MODE_PRIVATE);
         initializeSetupResult();
         getLatitudeAndLongitude();
         if (mLocationServiceIsDisabled) {//app will crash without location data
             Toast.makeText(MainActivity.this, "Please Enable GPS", Toast.LENGTH_SHORT)
                     .show();
         } else {
-            if (!initialized && ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if ((!initialized
+                    && ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
+                    == PERMISSION_GRANTED)
+                    || mSharedPreferences.getBoolean("useZipcode",false)) {
                 initializeViews();
             }
         }
@@ -86,19 +93,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                             mElevation = result.getData()
                                     .getDoubleExtra("elevation",0);
                         }
-                        SharedPreferences.Editor editor = getSharedPreferences(SHARED_PREF, MODE_PRIVATE).edit();
+                        SharedPreferences.Editor editor = mSharedPreferences.edit();
                         editor.putString("lastLocation", getLocationAsName()).apply();
-                    }
-                    if (result.getResultCode() == Activity.RESULT_CANCELED) {
+                    } else if (result.getResultCode() == Activity.RESULT_CANCELED) {
                         mElevation = 0;
-                        SharedPreferences.Editor editor = getSharedPreferences(SHARED_PREF, MODE_PRIVATE).edit();
-                        editor.putBoolean("askagain",false).apply();//If he doesn't care about elevation, we shouldn't bother him
+                        SharedPreferences.Editor editor = mSharedPreferences.edit();
+                        editor.putBoolean("askagain", false).apply();//If he doesn't care about elevation, we shouldn't bother him
                     }
                     setGeoLocationData();//Resend the GeoLocationData but with the user info for elevation.
                 }
         );
     }
 
+    /**
+     * This method initializes the main views of the app with the objects needed for the views.
+     * This method should only be called once! Moreover, the app must know the latitude and
+     * longitude before calling this method, otherwise, the app will crash.
+     */
     private void initializeViews() {
         initialized = true;
         mTimeZoneMap = TimeZoneMap.forRegion(Math.floor(mLatitude), Math.floor(mLongitude),
@@ -111,9 +122,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_today, R.id.navigation_specify, R.id.navigation_shabbat)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(navView, navController);
+        mNavController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        NavigationUI.setupActionBarWithNavController(this, mNavController, appBarConfiguration);
+        NavigationUI.setupWithNavController(navView, mNavController);
     }
 
     /**
@@ -134,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * @see #getLocationAsName()
      */
     private void startSetupIfNeeded() {
-        SharedPreferences prefs = getSharedPreferences(SHARED_PREF, MODE_PRIVATE);
+        SharedPreferences prefs = mSharedPreferences;
         String lastLocation = prefs.getString("lastLocation", "");
         String currentLocation = getLocationAsName();
         if (prefs.getBoolean("isSetup",false)) {
@@ -179,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * even in the same city.
      * @return a string containing the name of the current city and state/country that the user
      * is located in.
+     * @see Geocoder
      */
     private String getLocationAsName() {
         StringBuilder result = new StringBuilder();
@@ -228,46 +240,62 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * This method gets the devices last known latitude and longitude. It will ask for permission
      * if we do not have it, and it will alert the user if location services is disabled.
      *
-     * I have since added a more updated and accurate way of getting the current location of the
+     * As of Android 11 (API 30) there is a more accurate way of getting the current location of the
      * device, however, the process is slower as it needs to actually make a call to the GPS service
      * if the location has not been updated recently. This newer call made the app look slow at
-     * startup, therefore, I added a splash screen and a Toast to calm the user down a bit.
+     * startup, therefore, I added a splash screen and a Toast to let the user know that the app
+     * is working.
+     *
+     * Since version 2.0 of the app, this method will now first check if the user wants to use a
+     * zip code. If the user entered a zip code before, the app will use that zip code for as the
+     * current location.
      */
     private void getLatitudeAndLongitude() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    1);
+        if (mSharedPreferences.getBoolean("useZipcode",false)) {
+            getLatitudeAndLongitudeFromZipcode();
         } else {
-            try {
-                LocationManager locationManager =
-                        (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                if (locationManager != null) {
-                    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                        mLocationServiceIsDisabled = true;
-                    } else {
-                        locationManager.requestLocationUpdates(
-                                LocationManager.GPS_PROVIDER, 0, 2000, this);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {//newer implementation
-                            locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER,
-                                    new CancellationSignal(),
-                                    Runnable::run,
-                                    location -> {
-                                        if (location != null) {
-                                            mLatitude = location.getLatitude();
-                                            mLongitude = location.getLongitude();
-                                        }
-                                    });
-                            Toast.makeText(MainActivity.this,
-                                    "Trying to acquire your location...", Toast.LENGTH_LONG)
-                                    .show();//show a toast in order for the user to know that the app is working
-                            long tenSeconds = System.currentTimeMillis() + 10000;
-                            while (mLatitude == 0 && mLongitude == 0
-                                    && System.currentTimeMillis() < tenSeconds) {
-                                Thread.sleep(0);//we MUST wait for the location data to be set or else the app will crash
-                            }
-                            if (mLatitude == 0 && mLongitude == 0) {//if 10 seconds passed and we still don't have the location, use the older implementation
+            if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
+                    != PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        MainActivity.this, new String[]{ACCESS_FINE_LOCATION},
+                        1);
+            } else {
+                try {
+                    LocationManager locationManager =
+                            (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    if (locationManager != null) {
+                        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                            mLocationServiceIsDisabled = true;
+                        } else {
+                            locationManager.requestLocationUpdates(
+                                    LocationManager.GPS_PROVIDER, 0, 2000, this);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {//newer implementation
+                                locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER,
+                                        new CancellationSignal(),
+                                        Runnable::run,
+                                        location -> {
+                                            if (location != null) {
+                                                mLatitude = location.getLatitude();
+                                                mLongitude = location.getLongitude();
+                                            }
+                                        });
+                                Toast.makeText(MainActivity.this,
+                                        "Trying to acquire your location...", Toast.LENGTH_LONG)
+                                        .show();//show a toast in order for the user to know that the app is working
+                                long tenSeconds = System.currentTimeMillis() + 10000;
+                                while (mLatitude == 0 && mLongitude == 0
+                                        && System.currentTimeMillis() < tenSeconds) {
+                                    Thread.sleep(0);//we MUST wait for the location data to be set or else the app will crash
+                                }
+                                if (mLatitude == 0 && mLongitude == 0) {//if 10 seconds passed and we still don't have the location, use the older implementation
+                                    Location location = locationManager
+                                            .getLastKnownLocation(LocationManager.GPS_PROVIDER);//location might be old
+                                    if (location != null) {
+                                        mLatitude = location.getLatitude();
+                                        mLongitude = location.getLongitude();
+                                    }
+                                }
+                            } else {//older implementation
                                 Location location = locationManager
                                         .getLastKnownLocation(LocationManager.GPS_PROVIDER);//location might be old
                                 if (location != null) {
@@ -275,47 +303,134 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                     mLongitude = location.getLongitude();
                                 }
                             }
-                        } else {//older implementation
-                            Location location = locationManager
-                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);//location might be old
-                            if (location != null) {
-                                mLatitude = location.getLatitude();
-                                mLongitude = location.getLongitude();
-                            }
+                            Toast.makeText(MainActivity.this, getLocationAsName(),
+                                    Toast.LENGTH_LONG).show();
                         }
-                        Toast.makeText(MainActivity.this, getLocationAsName(),
-                                Toast.LENGTH_LONG).show();
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
 
     /**
      * This method will let us know if the user accepted the location permissions. If not, it will
-     * create an Alert Dialog box to ask the user to accept the permission again.
+     * create an Alert Dialog box to ask the user to accept the permission again or enter a zipcode.
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions,
                                            @NonNull @NotNull int[] grantResults) {
         if (requestCode == 1) {
-            if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (permissions.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
                 getLatitudeAndLongitude();
-                initializeViews();
+                if (!initialized) {
+                    initializeViews();
+                }
             } else {
-                new AlertDialog.Builder(this)
-                        .setTitle(R.string.title_location_permission)
-                        .setMessage(R.string.text_location_permission)
-                        .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
-                            getLatitudeAndLongitude();//restart
-                        })
-                        .create()
-                        .show();
+                createLocationDialog();
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    /**
+     * This method will create a new AlertDialog that asks the user to use their location and it
+     * will also give the option to use a zipcode through the createZipcodeDialog method which
+     * will create another dialog. This method will
+     *
+     * @see #createZipcodeDialog()
+     */
+    private void createLocationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.title_location_permission)
+                .setMessage(R.string.text_location_permission)
+                .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
+                    getLatitudeAndLongitude();//restart
+                })
+                .setNeutralButton(R.string.zipcode, (dialogInterface, i) -> createZipcodeDialog())
+                .setCancelable(false)
+                .create()
+                .show();
+    }
+
+    /**
+     * This method will create a new AlertDialog that asks the user to use their location and it
+     * will also give the option to use a zipcode through the EditText field.
+     */
+    private void createZipcodeDialog() {
+        final EditText input = new EditText(this);
+        new AlertDialog.Builder(this)
+                .setTitle("Enter a Zipcode")
+                .setMessage("Warning!!! Zmanim will NOT be accurate! Using a Zipcode will give " +
+                        "you zmanim based on approximately where you are. For more accurate " +
+                        "zmanim, please allow the app to see your location.")
+                .setView(input)
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
+                    if (input.getText().toString().isEmpty()) {// I would have loved to use a regex to validate the zipcode, however, it seems like zip codes are not uniform.
+                        Toast.makeText(
+                                MainActivity.this,
+                                "Please Enter a valid value," +
+                                        " for example: 11024",
+                                Toast.LENGTH_SHORT)
+                                .show();
+                        createLocationDialog();
+                    } else {
+                        SharedPreferences.Editor editor = mSharedPreferences.edit();
+                        editor.putBoolean("useZipcode", true)
+                                .apply();
+                        editor.putString("Zipcode", input.getText().toString())
+                                .apply();
+                        getLatitudeAndLongitudeFromZipcode();
+                        if (!initialized) {
+                            initializeViews();
+                        } else {
+                            setGeoLocationData();
+                            startSetupIfNeeded();
+                        }
+                        mNavController.navigate(R.id.navigation_today);
+                    }
+                })
+                .setNeutralButton("Use location", (dialog, which) -> {
+                    SharedPreferences.Editor editor = mSharedPreferences.edit();
+                    editor.putBoolean("useZipcode", false).apply();
+                    getLatitudeAndLongitude();
+                    setGeoLocationData();
+                    startSetupIfNeeded();
+                    mNavController.navigate(R.id.navigation_today);
+                })
+                .create()
+                .show();
+    }
+
+    /**
+     * This method uses the Geocoder class to get a latitude and longitude coordinate from the user
+     * specified zip code. If it can not find am address it will make a toast saying that an error
+     * occurred.
+     *
+     * @see Geocoder
+     */
+    private void getLatitudeAndLongitudeFromZipcode() {
+        String zipcode = mSharedPreferences.getString("Zipcode", "");
+        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+
+        try {
+            List<Address> address = geocoder.getFromLocationName(zipcode, 1);
+            if ((address != null ? address.size() : 0) > 0) {
+                Address first = address.get(0);
+                mLatitude = first.getLatitude();
+                mLongitude = first.getLongitude();
+
+                Toast.makeText(MainActivity.this, getLocationAsName(), Toast.LENGTH_LONG)
+                        .show();
+            } else {
+                Toast.makeText(MainActivity.this,
+                        "An error occurred getting zipcode coordinates", Toast.LENGTH_LONG)
+                        .show();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -327,51 +442,28 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.RerunSetup) {
+
+        if (id == R.id.enterZipcode) {
+            createZipcodeDialog();
+            return true;
+        } else if (id == R.id.RerunSetup) {
             startSetupForElevation();
             return true;
         } else if (id == R.id.settings) {
-            Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
-            startActivity(settingsIntent);
+            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
             return true;
         } else if (id == R.id.calc_explanations) {
-            Intent intent = new Intent(MainActivity.this, CalcExplanationsActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(MainActivity.this,
+                    CalcExplanationsActivity.class));
             return true;
         } else if (id == R.id.about) {
-            Intent aboutIntent = new Intent(MainActivity.this, AboutActivity.class);
-            startActivity(aboutIntent);
+            startActivity(new Intent(MainActivity.this, AboutActivity.class));
             return true;
         } else if (id == R.id.help) {
             new AlertDialog.Builder(this)
                     .setTitle("Help using this app:")
                     .setPositiveButton("ok", null)
-                    .setMessage("Welcome to the Rabbeinu Tam App, this app was made to help you " +
-                            "find out when sof zman rabbeinu tam is! \nThere are three steps to " +
-                            "setting up the app first. \n\n 1.) Setup elevation for where you are" +
-                            " currently located. In this first step is the setup screen that you " +
-                            "should have first encountered when starting up the app. Some " +
-                            "opinions hold that sunset is when you see the sun set at the highest" +
-                            " point of the city. You can enter mishor, or you can enter " +
-                            "the amount of elevation manually in meters, or if you don't know the" +
-                            " amount for your area, you can find out that info through the chai" +
-                            " tables website. Note that you do not need elevation for degree " +
-                            "based calculations. \n\n 2.) There are multiple opinions that you can " +
-                            "choose from as the user of this app in the settings menu. If you " +
-                            "want to know the details of that specific opinion and how the app " +
-                            "calculates the times for rabbeinu tam, check out the \"How the " +
-                            "calculations work\" menu option. \n\n 3.) There are three screens " +
-                            "to choose from in the main view of the app. The middle one is for " +
-                            "when rabbeinu tam is for today. The left one is if you want to " +
-                            "choose a specific day on the calendar for when rabbeinu tam is/was. " +
-                            "Lastly, there is the right one that shows when rabbeinu tam is for " +
-                            "this shabbat/shabbos.\n\nIn addition to all of this, there is a " +
-                            "feature that will tell you when to update the elevation if you leave" +
-                            " the city that you currently set up the app for. The reason for " +
-                            "this feature is because elevation will change bases on the city you" +
-                            " are located in. You will have to update it every time you move " +
-                            "around. However, this feature will only turn on if you use " +
-                            "elevation.")
+                    .setMessage(R.string.helper_text)
                     .show();
             return true;
         }

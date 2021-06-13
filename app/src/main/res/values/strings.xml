@@ -6,8 +6,13 @@
     <string name="shabbat_he">שבת</string>
     <string name="title_location_permission">No location permission</string>
     <string name="text_location_permission">
-        This app needs to have permission in order to find your location.
-        This app will not work until you allow it to see your location.</string>
+        Ideally, this app needs location permissions in order to accurately calculate the zmanim.
+        Therefore, it is better to allow the app to see your location. We do not use your location
+        for any other purpose than to calculate the zmanim. (Note: As of Android 11, the app can not
+        ask you for location permissions more than once per install. You might need to re-install
+        the app to use your location.) \n\n However, if you still do not want to give location
+        permissions, you can choose to enter a zipcode and the app will try to find your location.
+    </string>
     <string name="ok">OK</string>
     <string name="setup_elevation">Setup Elevation</string>
     <string name="mishor_request">If you want to use Mishor (Sea Level) Sunset for your calculations
@@ -195,10 +200,37 @@
         "calculation of tzait around the equinox in Jerusalem.\n\n"
     </string>
 
+    <string name="helper_text">Welcome to the Rabbeinu Tam App, this app was made to help you
+        find out when sof zman rabbeinu tam is! There are three steps to setting up the app first.\n
+        1.) Setup elevation for where you are currently located. In this first step is the setup
+        screen that you should have first encountered when starting up the app. Some opinions hold
+        that sunset is when you see the sun set at the highest point of the city. You can enter
+        mishor, or you can enter the amount of elevation manually in meters, or if you don\'t know
+        the amount for your area, you can find out that info through the chai tables website. Note
+        that you do not need elevation for degree based calculations.\n
+        2.) There are multiple opinions that you can choose from as the user of this app in the
+        settings menu. If you want to know the details of that specific opinion and how the app
+        calculates the times for rabbeinu tam, check out the "How the calculations work" menu
+        option.\n
+        3.) There are three screens to choose from in the main view of the app. The middle one is
+        for when rabbeinu tam is for today. The left one is if you want to choose a specific day on
+        the calendar for when rabbeinu tam is/was. Lastly, there is the right one that shows when
+        rabbeinu tam is for this shabbat/shabbos. In addition to all of this, there is a feature
+        that will tell you when to update the elevation if you leave the city that you currently
+        set up the app for. The reason for this feature is because elevation will change bases on
+        the city you are located in. You will have to update it every time you move around.
+        However, this feature will only turn on if you use elevation.
+    </string>
+
     <string name="opinion_header">Opinion (Shita)</string>
     <string name="contact_header">Contact the developer</string>
     <string name="opinion_title">Opinion to use</string>
     <string name="title_activity_calc_explanations">CalcExplanationActivity</string>
     <string name="help">Help</string>
     <string name="email">Email</string>
+    <string name="zipcode">Zipcode</string>
+    <string name="enter_a_zipcode">Enter A Zipcode</string>
+    <string name="enter_your_zipcode">Press this button to enter your zipcode:</string>
+    <string name="press_this_button_to_use_your_location">Press this button to use your location:</string>
+    <string name="ask_for_location">Ask for location</string>
 </resources>

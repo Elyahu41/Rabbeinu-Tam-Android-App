@@ -219,32 +219,7 @@ public class SetupActivity extends AppCompatActivity {
             new AlertDialog.Builder(this)
                     .setTitle("Help using this app:")
                     .setPositiveButton("ok", null)
-                    .setMessage("Welcome to the Rabbeinu Tam App, this app was made to help you " +
-                            "find out when sof zman rabbeinu tam is! \nThere are three steps to " +
-                            "setting up the app first. \n\n 1.) Setup elevation for where you are" +
-                            " currently located. In this first step is the setup screen that you " +
-                            "should have first encountered when starting up the app. Some " +
-                            "opinions hold that sunset is when you see the sun set at the highest" +
-                            " point of the city. You can enter mishor, or you can enter " +
-                            "the amount of elevation manually in meters, or if you don't know the" +
-                            " amount for your area, you can find out that info through the chai" +
-                            " tables website. Note that you do not need elevation for degree " +
-                            "based calculations. \n\n 2.) There are multiple opinions that you can " +
-                            "choose from as the user of this app in the settings menu. If you " +
-                            "want to know the details of that specific opinion and how the app " +
-                            "calculates the times for rabbeinu tam, check out the \"How the " +
-                            "calculations work\" menu option. \n\n 3.) There are three screens " +
-                            "to choose from in the main view of the app. The middle one is for " +
-                            "when rabbeinu tam is for today. The left one is if you want to " +
-                            "choose a specific day on the calendar for when rabbeinu tam is/was. " +
-                            "Lastly, there is the right one that shows when rabbeinu tam is for " +
-                            "this shabbat/shabbos.\n\nIn addition to all of this, there is a " +
-                            "feature that will tell you when to update the elevation if you leave" +
-                            " the city that you currently set up the app for. The reason for " +
-                            "this feature is because elevation will change bases on the city you" +
-                            " are located in. You will have to update it every time you move " +
-                            "around. However, this feature will only turn on if you use " +
-                            "elevation.")
+                    .setMessage(R.string.helper_text)
                     .show();
             return true;
         }

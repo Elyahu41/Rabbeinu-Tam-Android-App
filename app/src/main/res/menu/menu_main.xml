@@ -3,6 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/enterZipcode"
+        android:title="@string/enter_a_zipcode" />
+    <item
         android:id="@+id/RerunSetup"
         android:title="@string/re_run_setup" />
     <item
