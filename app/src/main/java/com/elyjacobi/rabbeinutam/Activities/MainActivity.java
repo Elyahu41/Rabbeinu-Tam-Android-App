@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
 
@@ -56,15 +55,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private String mCurrentTimeZoneID;
     private TimeZoneMap mTimeZoneMap;
     private ActivityResultLauncher<Intent> setupLauncher;
-    public static final String SHARED_PREF = "MyPrefsFile";
     private SharedPreferences mSharedPreferences;
     private NavController mNavController;
+    private Geocoder geocoder;
+
+    public static final String SHARED_PREF = "MyPrefsFile";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme);//splash screen
         super.onCreate(savedInstanceState);
         mSharedPreferences = getSharedPreferences(SHARED_PREF, MODE_PRIVATE);
+        geocoder = new Geocoder(getApplicationContext());
         initializeSetupResult();
         getLatitudeAndLongitude();
         if (mLocationServiceIsDisabled) {//app will crash without location data
@@ -138,35 +140,41 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     /**
      * This method checks if the user has already setup the elevation from the last time he started
      * the app. If he has not, it will startup the setup activity. If he has setup the elevation
-     * amount, then it checks if the user is in the same city as the last time he started the app
+     * amount, then it checks if the user is in the same city as the last time he setup the app
      * based on the getLocationAsName method. If the user is in the same city, all is good. If the
      * user is in another city, we make an AlertDialog to warn the user that the elevation data
      * MIGHT not be accurate.
      * @see #getLocationAsName()
      */
     private void startSetupIfNeeded() {
-        SharedPreferences prefs = mSharedPreferences;
-        String lastLocation = prefs.getString("lastLocation", "");
+        String lastLocation = mSharedPreferences.getString("lastLocation", "");
         String currentLocation = getLocationAsName();
-        if (prefs.getBoolean("isSetup",false)) {
-            if (Objects.requireNonNull( lastLocation ).equals( currentLocation ) ) {//if he is in the same place
-                mElevation = prefs.getFloat("elevation",0);//get the last value
-            } else {//user is in another city, therefore he should update his elevation
-                if (prefs.getBoolean("askagain", true)) {
+
+        if (mSharedPreferences.getBoolean("isSetup",false)) {//make sure elevation has been setup
+            mElevation = mSharedPreferences.getFloat("elevation",0);//get the last value
+            if (!lastLocation.equals( currentLocation )) {//user should update his elevation in another city
+                if (mSharedPreferences.getBoolean("askagain", true)) {
                     new AlertDialog.Builder(this)
-                            .setTitle("You are not in the same city as the last time that you setup the app!")
+                            .setTitle("You are not in the same city as the last time that you " +
+                                    "setup the app!")
                             .setMessage("Elevation changes depending on which city you are in. " +
-                                    "Therefore, it is recommended that you update your elevation data. " +
-                                    "\n\n" + "Last Location: " + lastLocation +
-                                    "\n" + "Current Location: " + currentLocation + "\n\n" +
+                                    "Therefore, it is recommended that you update your elevation" +
+                                    " data. " + "\n\n" +
+                                    "Last Location: " + lastLocation + "\n" +
+                                    "Current Location: " + currentLocation + "\n\n" +
                                     "Would you like to rerun the setup now?")
-                            .setPositiveButton("Yes", (dialogInterface, i) -> startSetupForElevation())
+                            .setPositiveButton("Yes", (dialogInterface, i) ->
+                                    startSetupForElevation())
                             .setNegativeButton("No", (dialogInterface, i) -> Toast.makeText(
                                     getApplicationContext(), "Your current elevation is: " +
-                                            prefs.getFloat("elevation", 0), Toast.LENGTH_LONG)
+                                            mElevation, Toast.LENGTH_LONG)
                                     .show())
-                            .setNeutralButton("Do not ask again", (dialogInterface, i) ->
-                                    prefs.edit().putBoolean("askagain", false).apply())
+                            .setNeutralButton("Do not ask again", (dialogInterface, i) -> {
+                                mSharedPreferences.edit().putBoolean("askagain", false).apply();
+                                Toast.makeText(getApplicationContext(),
+                                        "Your current elevation is: " + mElevation,
+                                        Toast.LENGTH_LONG).show();
+                            })
                             .show();
                 }
             }
@@ -194,7 +202,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      */
     private String getLocationAsName() {
         StringBuilder result = new StringBuilder();
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
         List<Address> addresses = null;
         try {
             addresses = geocoder.getFromLocation(mLatitude, mLongitude, 1);
@@ -250,6 +257,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * zip code. If the user entered a zip code before, the app will use that zip code for as the
      * current location.
      */
+    @SuppressWarnings("BusyWait")
     private void getLatitudeAndLongitude() {
         if (mSharedPreferences.getBoolean("useZipcode",false)) {
             getLatitudeAndLongitudeFromZipcode();
@@ -412,7 +420,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      */
     private void getLatitudeAndLongitudeFromZipcode() {
         String zipcode = mSharedPreferences.getString("Zipcode", "");
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
         try {
             List<Address> address = geocoder.getFromLocationName(zipcode, 1);
