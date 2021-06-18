@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private boolean initialized = false;
     private boolean mLocationServiceIsDisabled;
     private String mCurrentTimeZoneID;
-    private TimeZoneMap mTimeZoneMap;
     private ActivityResultLauncher<Intent> setupLauncher;
     private SharedPreferences mSharedPreferences;
     private NavController mNavController;
@@ -114,8 +113,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      */
     private void initializeViews() {
         initialized = true;
-        mTimeZoneMap = TimeZoneMap.forRegion(Math.floor(mLatitude), Math.floor(mLongitude),
-                Math.ceil(mLatitude), Math.ceil(mLongitude));//trying to avoid using the forEverywhere() method
         setTimeZoneID();
         startSetupIfNeeded();
         setGeoLocationData();//First time setup will give non-user info, but this is needed to avoid a null pointer exception
@@ -133,8 +130,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * uses the TimeZoneMap to get the current timezone ID based on the latitude and longitude
      */
     private void setTimeZoneID() {
+        TimeZoneMap timeZoneMap = TimeZoneMap.forRegion(
+                Math.floor(mLatitude), Math.floor(mLongitude),
+                Math.ceil(mLatitude), Math.ceil(mLongitude));//trying to avoid using the forEverywhere() method
         mCurrentTimeZoneID = Objects.requireNonNull(
-                mTimeZoneMap.getOverlappingTimeZone(mLatitude, mLongitude)).getZoneId();
+                timeZoneMap.getOverlappingTimeZone(mLatitude, mLongitude)).getZoneId();
     }
 
     /**
@@ -385,14 +385,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                         createLocationDialog();
                     } else {
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
-                        editor.putBoolean("useZipcode", true)
-                                .apply();
-                        editor.putString("Zipcode", input.getText().toString())
-                                .apply();
+                        editor.putBoolean("useZipcode", true).apply();
+                        editor.putString("Zipcode", input.getText().toString()).apply();
                         getLatitudeAndLongitudeFromZipcode();
                         if (!initialized) {
                             initializeViews();
                         } else {
+                            setTimeZoneID();
                             setGeoLocationData();
                             startSetupIfNeeded();
                         }
