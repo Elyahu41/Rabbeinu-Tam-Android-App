@@ -93,7 +93,7 @@ public class ShabbatFragment extends Fragment {
                     userChosenOpinion = mRTCalendar.getTzais120Zmanis();
                     break;
                 case "50 regular minutes (NY Only)":
-                    userChosenOpinion = mRTCalendar.getRMosheFeinstein();
+                    userChosenOpinion = mRTCalendar.getTzais50();
                     break;
                 case "60 regular minutes":
                     userChosenOpinion = mRTCalendar.getTzais60();
@@ -126,10 +126,16 @@ public class ShabbatFragment extends Fragment {
                     userChosenOpinion = mRTCalendar.getTzais72Zmanis();
                     break;
             }
-            userChosenOpinion = new Date(userChosenOpinion.getTime() + ONE_MINUTE_IN_MILLI);//round up to the nearest minute
-            mDate = mDateFormatter.format(userChosenOpinion);
-            mTime = mTimeFormatter.format(userChosenOpinion);
-            mSunsetTime = mTimeFormatter.format(mRTCalendar.getSunset());
+            Date sunset = mRTCalendar.getSunset();
+            mSunsetTime = mTimeFormatter.format(sunset);
+            if (userChosenOpinion != null) {
+                userChosenOpinion = new Date(userChosenOpinion.getTime() + ONE_MINUTE_IN_MILLI);//round up to the nearest minute
+                mDate = mDateFormatter.format(userChosenOpinion);
+                mTime = mTimeFormatter.format(userChosenOpinion);
+            } else {
+                mDate = mDateFormatter.format(sunset);
+                mTime = "Not Available";
+            }
         }
     }
 }

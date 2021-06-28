@@ -34,7 +34,6 @@
     <string name="about">About</string>
     <string name="settings">Settings</string>
     <string name="how_the_calculations_work">How the calculations work</string>
-    <string name="re_run_setup">Re-run Setup</string>
     <string name="title_activity_about">About Activity</string>
     <string name="about_text">
         "Why I created this app.\n\n"

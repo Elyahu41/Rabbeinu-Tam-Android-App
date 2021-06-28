@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+<menu
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
@@ -7,7 +8,7 @@
         android:title="@string/enter_a_zipcode" />
     <item
         android:id="@+id/RerunSetup"
-        android:title="@string/re_run_setup" />
+        android:title="@string/setup_elevation" />
     <item
         android:id="@+id/settings"
         android:title="@string/settings" />

@@ -265,8 +265,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
                     != PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(
-                        MainActivity.this, new String[]{ACCESS_FINE_LOCATION},
-                        1);
+                        MainActivity.this, new String[]{ACCESS_FINE_LOCATION}, 1);
             } else {
                 try {
                     LocationManager locationManager =

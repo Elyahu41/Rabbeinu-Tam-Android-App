@@ -27,8 +27,6 @@ import com.elyjacobi.rabbeinutam.R;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ExecutionException;
-
 import static com.elyjacobi.rabbeinutam.Activities.MainActivity.SHARED_PREF;
 
 public class SetupActivity extends AppCompatActivity {
@@ -144,21 +142,23 @@ public class SetupActivity extends AppCompatActivity {
                     if (view.getUrl().startsWith("http://chaitables.com/cgi-bin/")) {//this is enough to know that it is showing the table with the info we need
                         ChaiTablesScraper thread = new ChaiTablesScraper();
                         thread.setUrl(view.getUrl());
+                        thread.start();
                         try {
-                            double result = thread.execute().get();
-                            SharedPreferences.Editor editor = getSharedPreferences(
-                                    SHARED_PREF, MODE_PRIVATE).edit();
-                            editor.putFloat("elevation", (float) result).apply();
-                            editor.putBoolean("isSetup", true).apply();
-                            Intent returnIntent = new Intent();
-                            returnIntent.putExtra("elevation", result);
-                            setResult(Activity.RESULT_OK, returnIntent);
-                            Toast.makeText(SetupActivity.this,
-                                    "Elevation received from ChaiTables!: " + result,
-                                    Toast.LENGTH_LONG).show();
-                        } catch (ExecutionException | InterruptedException e) {
+                            thread.join();
+                        } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                        double result = thread.getResult();
+                        SharedPreferences.Editor editor = getSharedPreferences(
+                                SHARED_PREF, MODE_PRIVATE).edit();
+                        editor.putFloat("elevation", (float) result).apply();
+                        editor.putBoolean("isSetup", true).apply();
+                        Intent returnIntent = new Intent();
+                        returnIntent.putExtra("elevation", result);
+                        setResult(Activity.RESULT_OK, returnIntent);
+                        Toast.makeText(SetupActivity.this,
+                                "Elevation received from ChaiTables!: " + result,
+                                Toast.LENGTH_LONG).show();
                         finish();
                     }
                 }
@@ -166,6 +166,11 @@ public class SetupActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Self explanatory convenience method to hide all the views except the WebView.
+     * @param visibility either values of visibilities mentioned in the {@link View} class.
+     * @see View
+     */
     private void setVisibilityOfViews(int visibility) {
         mMishorButton.setVisibility(visibility);
         mManualButton.setVisibility(visibility);

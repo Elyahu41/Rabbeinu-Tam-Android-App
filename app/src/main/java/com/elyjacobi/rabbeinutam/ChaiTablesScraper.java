@@ -1,7 +1,5 @@
 package com.elyjacobi.rabbeinutam;
 
-import android.os.AsyncTask;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,7 +10,12 @@ import java.io.IOException;
 /**
  * This class is scrapes the entire chai tables webpage and searches it for the elevation data.
  */
-public class ChaiTablesScraper extends AsyncTask<Void,Void,Double> {
+public class ChaiTablesScraper extends Thread {
+
+    /**
+     * The result of the highest point of elevation from the tables.
+     */
+    private double mResult;
 
     /**
      * The URL to scrape, this must be set before we do any actual work.
@@ -26,6 +29,15 @@ public class ChaiTablesScraper extends AsyncTask<Void,Void,Double> {
      */
     public void setUrl(String url) {
         mUrl = url;
+        assertUsableURL();
+    }
+
+    /**
+     * The getter for the result of the elevation
+     * @return the double value of the result from the tables
+     */
+    public double getResult() {
+        return mResult;
     }
 
     /**
@@ -52,16 +64,16 @@ public class ChaiTablesScraper extends AsyncTask<Void,Void,Double> {
     }
 
     /**
-     * This is where the real action happens. This method uses the Jsoup Api to download the whole
+     * This is where the real action happens. This method uses the Jsoup API to download the whole
      * page as one very long string. (It could probably be refactored to be more efficient) After it
      * has the whole webpage, it searches it for the elevation data. Currently the data is displayed
      * in the webpage like this, " height: 30m " The method searches for the word height and a new
-     * line character. This is probable not future proof, but it works for now and I do not think
+     * line character. This is probably not future proof, but it works for now and I do not think
      * the website will be updated for a while.
      * @return a double containing the highest elevation of the city in meters
      * @throws IOException because of the Jsoup API if an error occurs
      */
-    public double saveElevationData() throws IOException {
+    public double getElevationData() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         Document doc = Jsoup.connect(mUrl)
                 .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
@@ -97,13 +109,11 @@ public class ChaiTablesScraper extends AsyncTask<Void,Void,Double> {
     }
 
     @Override
-    protected Double doInBackground(Void... voids) {
+    public void run() {
         try {
-            assertUsableURL();
-            return saveElevationData();
+            mResult = getElevationData();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
     }
 }
