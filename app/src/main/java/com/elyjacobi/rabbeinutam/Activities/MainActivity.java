@@ -1,5 +1,8 @@
 package com.elyjacobi.rabbeinutam.Activities;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -42,9 +45,6 @@ import java.util.TimeZone;
 
 import us.dustinj.timezonemap.TimeZoneMap;
 
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
     private double mLatitude;
@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private double mElevation = 0;
     private boolean initialized = false;
     private boolean mLocationServiceIsDisabled;
+    private String mCurrentLocation;
     private String mCurrentTimeZoneID;
     private ActivityResultLauncher<Intent> setupLauncher;
     private SharedPreferences mSharedPreferences;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private Geocoder geocoder;
 
     public static final String SHARED_PREF = "MyPrefsFile";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                     .getDoubleExtra("elevation",0);
                         }
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
-                        editor.putString("lastLocation", getLocationAsName()).apply();
+                        editor.putString("lastLocation", mCurrentLocation).apply();
                     } else if (result.getResultCode() == Activity.RESULT_CANCELED) {
                         mElevation = 0;
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
@@ -130,11 +132,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * uses the TimeZoneMap to get the current timezone ID based on the latitude and longitude
      */
     private void setTimeZoneID() {
-        TimeZoneMap timeZoneMap = TimeZoneMap.forRegion(
-                Math.floor(mLatitude), Math.floor(mLongitude),
-                Math.ceil(mLatitude), Math.ceil(mLongitude));//trying to avoid using the forEverywhere() method
-        mCurrentTimeZoneID = Objects.requireNonNull(
-                timeZoneMap.getOverlappingTimeZone(mLatitude, mLongitude)).getZoneId();
+        if (mLatitude != 0 && mLongitude != 0) {
+            TimeZoneMap timeZoneMap = TimeZoneMap.forRegion(
+                    Math.floor(mLatitude), Math.floor(mLongitude),
+                    Math.ceil(mLatitude), Math.ceil(mLongitude));//trying to avoid using the forEverywhere() method
+            mCurrentTimeZoneID = Objects.requireNonNull(
+                    timeZoneMap.getOverlappingTimeZone(mLatitude, mLongitude)).getZoneId();
+        }
     }
 
     /**
@@ -148,11 +152,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      */
     private void startSetupIfNeeded() {
         String lastLocation = mSharedPreferences.getString("lastLocation", "");
-        String currentLocation = getLocationAsName();
 
         if (mSharedPreferences.getBoolean("isSetup",false)) {//make sure elevation has been setup
             mElevation = mSharedPreferences.getFloat("elevation",0);//get the last value
-            if (!lastLocation.equals( currentLocation )) {//user should update his elevation in another city
+            if (!lastLocation.equals(mCurrentLocation)) {//user should update his elevation in another city
                 if (mSharedPreferences.getBoolean("askagain", true)) {
                     new AlertDialog.Builder(this)
                             .setTitle("You are not in the same city as the last time that you " +
@@ -161,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                     "Therefore, it is recommended that you update your elevation" +
                                     " data. " + "\n\n" +
                                     "Last Location: " + lastLocation + "\n" +
-                                    "Current Location: " + currentLocation + "\n\n" +
+                                    "Current Location: " + mCurrentLocation + "\n\n" +
                                     "Would you like to rerun the setup now?")
                             .setPositiveButton("Yes", (dialogInterface, i) ->
                                     startSetupForElevation())
@@ -310,14 +313,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                     mLongitude = location.getLongitude();
                                 }
                             }
-                            Toast.makeText(MainActivity.this, getLocationAsName(),
-                                    Toast.LENGTH_LONG).show();
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+        }
+        mCurrentLocation = getLocationAsName();
+        if (mCurrentLocation.isEmpty()) {
+            if (mLatitude != 0 && mLongitude != 0) {
+                String lat = String.valueOf(mLatitude).substring(0, 4);
+                String longitude = String.valueOf(mLongitude).substring(0, 5);
+                mCurrentLocation = "Lat: " + lat + " Long: " + longitude;
+            }
+        }
+        if (!mCurrentLocation.isEmpty()) {
+            Toast.makeText(MainActivity.this, mCurrentLocation, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -425,16 +437,42 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 Address first = address.get(0);
                 mLatitude = first.getLatitude();
                 mLongitude = first.getLongitude();
-
-                Toast.makeText(MainActivity.this, getLocationAsName(), Toast.LENGTH_LONG)
+                mCurrentLocation = getLocationAsName();
+                Toast.makeText(MainActivity.this, mCurrentLocation, Toast.LENGTH_LONG)
                         .show();
+                mSharedPreferences.edit().putLong("lat", Double.doubleToRawLongBits(mLatitude))
+                        .apply();
+                mSharedPreferences.edit().putLong("long", Double.doubleToRawLongBits(mLongitude))
+                        .apply();
             } else {
-                Toast.makeText(MainActivity.this,
-                        "An error occurred getting zipcode coordinates", Toast.LENGTH_LONG)
-                        .show();
+                getOldZipcodeLocation();
             }
         } catch (IOException e) {
+            getOldZipcodeLocation();
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * This method retrieves the old location data from the devices storage if it has already been
+     * setup beforehand.
+     * @see #getLatitudeAndLongitudeFromZipcode()
+     */
+    private void getOldZipcodeLocation() {
+        double oldLat = Double.longBitsToDouble(mSharedPreferences.getLong("lat", 0));
+        double oldLong = Double.longBitsToDouble(mSharedPreferences.getLong("long",0));
+
+        if (oldLat == mLatitude && oldLong == mLongitude) {
+            Toast.makeText(MainActivity.this,
+                    "Unable to change location, using old location.", Toast.LENGTH_LONG).show();
+        }
+
+        if (oldLat != 0 && oldLong != 0) {
+            mLatitude = oldLat;
+            mLongitude = oldLong;
+        } else {
+            Toast.makeText(MainActivity.this,
+                    "An error occurred getting zipcode coordinates", Toast.LENGTH_LONG).show();
         }
     }
 
