@@ -430,26 +430,25 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      */
     private void getLatitudeAndLongitudeFromZipcode() {
         String zipcode = mSharedPreferences.getString("Zipcode", "");
-
+        List<Address> address = null;
         try {
-            List<Address> address = geocoder.getFromLocationName(zipcode, 1);
-            if ((address != null ? address.size() : 0) > 0) {
-                Address first = address.get(0);
-                mLatitude = first.getLatitude();
-                mLongitude = first.getLongitude();
-                mCurrentLocation = getLocationAsName();
-                Toast.makeText(MainActivity.this, mCurrentLocation, Toast.LENGTH_LONG)
-                        .show();
-                mSharedPreferences.edit().putLong("lat", Double.doubleToRawLongBits(mLatitude))
-                        .apply();
-                mSharedPreferences.edit().putLong("long", Double.doubleToRawLongBits(mLongitude))
-                        .apply();
-            } else {
-                getOldZipcodeLocation();
-            }
+            address = geocoder.getFromLocationName(zipcode, 1);
         } catch (IOException e) {
-            getOldZipcodeLocation();
             e.printStackTrace();
+        }
+        if ((address != null ? address.size() : 0) > 0) {
+            Address first = address.get(0);
+            mLatitude = first.getLatitude();
+            mLongitude = first.getLongitude();
+            mCurrentLocation = getLocationAsName();
+            Toast.makeText(MainActivity.this, mCurrentLocation, Toast.LENGTH_LONG)
+                    .show();
+            mSharedPreferences.edit().putLong("lat", Double.doubleToRawLongBits(mLatitude))
+                    .apply();
+            mSharedPreferences.edit().putLong("long", Double.doubleToRawLongBits(mLongitude))
+                    .apply();
+        } else {
+            getOldZipcodeLocation();
         }
     }
 

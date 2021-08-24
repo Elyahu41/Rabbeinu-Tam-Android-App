@@ -1,11 +1,12 @@
 package com.elyjacobi.rabbeinutam.Activities;
 
+import static com.elyjacobi.rabbeinutam.Activities.MainActivity.SHARED_PREF;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -27,8 +28,6 @@ import com.elyjacobi.rabbeinutam.R;
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.elyjacobi.rabbeinutam.Activities.MainActivity.SHARED_PREF;
-
 public class SetupActivity extends AppCompatActivity {
 
     private double mElevation = 0;
@@ -49,7 +48,6 @@ public class SetupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup);
         setupHeader = findViewById(R.id.setup_header);
-        setupHeader.setTypeface(Typeface.DEFAULT_BOLD);
         elevationInfo = findViewById(R.id.elevation_info);
         mishorRequest = findViewById(R.id.mishor_request);
         manualRequest = findViewById(R.id.manual_request);
