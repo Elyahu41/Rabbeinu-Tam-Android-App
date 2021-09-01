@@ -51,16 +51,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private double mLongitude;
     private double mElevation = 0;
     private boolean initialized = false;
-    private boolean mLocationServiceIsDisabled;
+    private boolean mGPSLocationServiceIsDisabled;
+    private boolean mNetworkLocationServiceIsDisabled;
     private String mCurrentLocation;
     private String mCurrentTimeZoneID;
     private ActivityResultLauncher<Intent> setupLauncher;
     private SharedPreferences mSharedPreferences;
     private NavController mNavController;
     private Geocoder geocoder;
-
     public static final String SHARED_PREF = "MyPrefsFile";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         geocoder = new Geocoder(getApplicationContext());
         initializeSetupResult();
         getLatitudeAndLongitude();
-        if (mLocationServiceIsDisabled) {//app will crash without location data
+        if (mGPSLocationServiceIsDisabled && mNetworkLocationServiceIsDisabled) {//app will crash without location data
             Toast.makeText(MainActivity.this, "Please Enable GPS", Toast.LENGTH_SHORT)
                     .show();
         } else {
@@ -265,21 +264,34 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         if (mSharedPreferences.getBoolean("useZipcode",false)) {
             getLatitudeAndLongitudeFromZipcode();
         } else {
-            if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
-                    != PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                        MainActivity.this, new String[]{ACCESS_FINE_LOCATION}, 1);
+            if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{ACCESS_FINE_LOCATION}, 1);
             } else {
                 try {
-                    LocationManager locationManager =
-                            (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                     if (locationManager != null) {
+                        if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                            mNetworkLocationServiceIsDisabled = true;
+                        }
                         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                            mLocationServiceIsDisabled = true;
-                        } else {
-                            locationManager.requestLocationUpdates(
-                                    LocationManager.GPS_PROVIDER, 0, 2000, this);
+                            mGPSLocationServiceIsDisabled = true;
+                        }
+                        if (!mNetworkLocationServiceIsDisabled) {
+                            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 2000, this);
+                        } else if (!mGPSLocationServiceIsDisabled) {
+                            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 2000, this);
+                        }
+                        if (!mNetworkLocationServiceIsDisabled || !mGPSLocationServiceIsDisabled) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {//newer implementation
+                                locationManager.getCurrentLocation(LocationManager.NETWORK_PROVIDER,
+                                        new CancellationSignal(),
+                                        Runnable::run,
+                                        location -> {
+                                            if (location != null) {
+                                                mLatitude = location.getLatitude();
+                                                mLongitude = location.getLongitude();
+                                            }
+                                        });
                                 locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER,
                                         new CancellationSignal(),
                                         Runnable::run,
@@ -293,21 +305,28 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                         "Trying to acquire your location...", Toast.LENGTH_LONG)
                                         .show();//show a toast in order for the user to know that the app is working
                                 long tenSeconds = System.currentTimeMillis() + 10000;
-                                while (mLatitude == 0 && mLongitude == 0
-                                        && System.currentTimeMillis() < tenSeconds) {
+                                while (mLatitude == 0 && mLongitude == 0 && System.currentTimeMillis() < tenSeconds) {
                                     Thread.sleep(0);//we MUST wait for the location data to be set or else the app will crash
                                 }
                                 if (mLatitude == 0 && mLongitude == 0) {//if 10 seconds passed and we still don't have the location, use the older implementation
-                                    Location location = locationManager
-                                            .getLastKnownLocation(LocationManager.GPS_PROVIDER);//location might be old
+                                    Location location;//location might be old
+                                    if (!mNetworkLocationServiceIsDisabled) {
+                                        location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                                    } else {
+                                        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                                    }
                                     if (location != null) {
                                         mLatitude = location.getLatitude();
                                         mLongitude = location.getLongitude();
                                     }
                                 }
                             } else {//older implementation
-                                Location location = locationManager
-                                        .getLastKnownLocation(LocationManager.GPS_PROVIDER);//location might be old
+                                Location location;//location might be old
+                                if (!mNetworkLocationServiceIsDisabled) {
+                                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                                } else {
+                                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                                }
                                 if (location != null) {
                                     mLatitude = location.getLatitude();
                                     mLongitude = location.getLongitude();
@@ -320,6 +339,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 }
             }
         }
+        resolveCurrentLocationName();
+    }
+
+    private void resolveCurrentLocationName() {
         mCurrentLocation = getLocationAsName();
         if (mCurrentLocation.isEmpty()) {
             if (mLatitude != 0 && mLongitude != 0) {
