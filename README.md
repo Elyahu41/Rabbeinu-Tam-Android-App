@@ -8,3 +8,5 @@ Included in the app, is the ability to add elevation data to the sunrise and sun
 that gathered this information for each city. In the app, you can choose to navigate to the website and find your city's elevation data.
 
 Click this link to download the app from the Play Store!: https://play.google.com/store/apps/details?id=com.EJ.rabbeinutam
+
+![alt text](https://play-lh.googleusercontent.com/O7t07S1VdNC2DUecr3cpSpZThhs_X1r9xmRaBLPFD2HNkfdn6k_4KUuVpm694DlgnzY=w720-h310-rw)
