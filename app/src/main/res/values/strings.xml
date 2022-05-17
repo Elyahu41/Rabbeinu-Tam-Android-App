@@ -21,9 +21,8 @@
     <string name="manual_button">If you want to specify the elevation level (in meters) yourself,
         press this button:</string>
     <string name="manual">Manual</string>
-    <string name="chaitables_request">If you want to get this information from chaitables.com,
+    <string name="geonames_request">If you want to get this information from geonames.com,
         press this button:</string>
-    <string name="chaitables">ChaiTables</string>
     <string name="long_explanation">Some opinions hold that the actual sunset that should be used
         for calculating zmanim is when sunset is seen at the highest point in the city.
         However, some do not hold of this opinion. Therefore, I left this part up to the user.
@@ -232,4 +231,6 @@
     <string name="enter_your_zipcode">Press this button to enter your zipcode:</string>
     <string name="press_this_button_to_use_your_location">Press this button to use your location:</string>
     <string name="ask_for_location">Ask for location</string>
+    <string name="get_from_geonames">Get from Geonames</string>
+    <string name="refresh">Refresh</string>
 </resources>

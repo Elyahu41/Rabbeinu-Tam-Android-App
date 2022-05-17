@@ -15,7 +15,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -32,6 +31,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.elyjacobi.rabbeinutam.GeoLocationData;
+import com.elyjacobi.rabbeinutam.LocationResolver;
 import com.elyjacobi.rabbeinutam.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.kosherjava.zmanim.util.GeoLocation;
@@ -47,18 +47,19 @@ import us.dustinj.timezonemap.TimeZoneMap;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    private double mLatitude;
-    private double mLongitude;
+    public static double sLatitude;
+    public static double sLongitude;
     private double mElevation = 0;
     private boolean initialized = false;
     private boolean mGPSLocationServiceIsDisabled;
     private boolean mNetworkLocationServiceIsDisabled;
-    private String mCurrentLocation;
+    public static String sCurrentLocation;
     private String mCurrentTimeZoneID;
     private ActivityResultLauncher<Intent> setupLauncher;
     private SharedPreferences mSharedPreferences;
     private NavController mNavController;
     private Geocoder geocoder;
+    private LocationResolver mLocationResolver;
     public static final String SHARED_PREF = "MyPrefsFile";
 
     @Override
@@ -67,11 +68,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         mSharedPreferences = getSharedPreferences(SHARED_PREF, MODE_PRIVATE);
         geocoder = new Geocoder(getApplicationContext());
+        mLocationResolver = new LocationResolver(this);
         initializeSetupResult();
-        getLatitudeAndLongitude();
+        acquireLatitudeAndLongitude();
         if (mGPSLocationServiceIsDisabled && mNetworkLocationServiceIsDisabled) {//app will crash without location data
-            Toast.makeText(MainActivity.this, "Please Enable GPS", Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(MainActivity.this, "Please Enable GPS", Toast.LENGTH_SHORT).show();
         } else {
             if ((!initialized
                     && ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
@@ -92,11 +93,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK){
                         if (result.getData() != null) {
-                            mElevation = result.getData()
-                                    .getDoubleExtra("elevation",0);
+                            mElevation = Double.parseDouble(result.getData().getStringExtra("elevation"));
                         }
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
-                        editor.putString("lastLocation", mCurrentLocation).apply();
+                        editor.putString("lastLocation", sCurrentLocation).apply();
                     } else if (result.getResultCode() == Activity.RESULT_CANCELED) {
                         mElevation = 0;
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
@@ -131,12 +131,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      * uses the TimeZoneMap to get the current timezone ID based on the latitude and longitude
      */
     private void setTimeZoneID() {
-        if (mLatitude != 0 && mLongitude != 0) {
+        if (sLatitude != 0 && sLongitude != 0) {
             TimeZoneMap timeZoneMap = TimeZoneMap.forRegion(
-                    Math.floor(mLatitude), Math.floor(mLongitude),
-                    Math.ceil(mLatitude), Math.ceil(mLongitude));//trying to avoid using the forEverywhere() method
-            mCurrentTimeZoneID = Objects.requireNonNull(
-                    timeZoneMap.getOverlappingTimeZone(mLatitude, mLongitude)).getZoneId();
+                    Math.floor(sLatitude), Math.floor(sLongitude),
+                    Math.ceil(sLatitude), Math.ceil(sLongitude));//trying to avoid using the forEverywhere() method
+            mCurrentTimeZoneID = Objects.requireNonNull(timeZoneMap.getOverlappingTimeZone(sLatitude, sLongitude))
+                    .getZoneId();
+        } else {
+            mCurrentTimeZoneID = TimeZone.getDefault().getID();
         }
     }
 
@@ -153,33 +155,43 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         String lastLocation = mSharedPreferences.getString("lastLocation", "");
 
         if (mSharedPreferences.getBoolean("isSetup",false)) {//make sure elevation has been setup
-            mElevation = mSharedPreferences.getFloat("elevation",0);//get the last value
-            if (!lastLocation.equals(mCurrentLocation)) {//user should update his elevation in another city
+            try {
+                mElevation = Double.parseDouble(mSharedPreferences.getString("elevation" + sCurrentLocation, "0"));
+            } catch (Exception e) {
+                try {
+                    mElevation = mSharedPreferences.getFloat("elevation",0);//legacy
+                } catch (Exception e2) {
+                    mElevation = 0;
+                    e2.printStackTrace();
+                }
+            }
+            if (mElevation == 0) {//user should update his elevation if his elevation is 0 and he has not chosen mishor
                 if (mSharedPreferences.getBoolean("askagain", true)) {
                     new AlertDialog.Builder(this)
-                            .setTitle("You are not in the same city as the last time that you " +
-                                    "setup the app!")
+                            .setTitle("No elevation data for this city!")
                             .setMessage("Elevation changes depending on which city you are in. " +
                                     "Therefore, it is recommended that you update your elevation" +
                                     " data. " + "\n\n" +
                                     "Last Location: " + lastLocation + "\n" +
-                                    "Current Location: " + mCurrentLocation + "\n\n" +
+                                    "Current Location: " + sCurrentLocation + "\n\n" +
                                     "Would you like to rerun the setup now?")
                             .setPositiveButton("Yes", (dialogInterface, i) ->
                                     startSetupForElevation())
                             .setNegativeButton("No", (dialogInterface, i) -> Toast.makeText(
                                     getApplicationContext(), "Your current elevation is: " +
-                                            mElevation, Toast.LENGTH_LONG)
+                                            mElevation, Toast.LENGTH_SHORT)
                                     .show())
                             .setNeutralButton("Do not ask again", (dialogInterface, i) -> {
                                 mSharedPreferences.edit().putBoolean("askagain", false).apply();
                                 Toast.makeText(getApplicationContext(),
                                         "Your current elevation is: " + mElevation,
-                                        Toast.LENGTH_LONG).show();
+                                        Toast.LENGTH_SHORT).show();
                             })
                             .show();
                 }
             }
+            Toast.makeText(getApplicationContext(), "Your current elevation is: " + mElevation + " for the location: " + sCurrentLocation,
+                    Toast.LENGTH_LONG).show();
         } else {
             startSetupForElevation();
         }
@@ -206,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         StringBuilder result = new StringBuilder();
         List<Address> addresses = null;
         try {
-            addresses = geocoder.getFromLocation(mLatitude, mLongitude, 1);
+            addresses = geocoder.getFromLocation(sLatitude, sLongitude, 1);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -219,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             if (state != null) { result.append(state); }
 
             if (result.toString().endsWith(",")) {
-                result.deleteCharAt(result.length()-1);
+                result.deleteCharAt(result.length() - 2);
             }
 
             if (city == null && state == null) {
@@ -239,8 +251,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private void setGeoLocationData() {
         GeoLocationData.setGeoLocation(new GeoLocation(
                 "",//not needed
-                mLatitude,
-                mLongitude,
+                sLatitude,
+                sLongitude,
                 mElevation,
                 TimeZone.getTimeZone(mCurrentTimeZoneID)));
     }
@@ -248,27 +260,24 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     /**
      * This method gets the devices last known latitude and longitude. It will ask for permission
      * if we do not have it, and it will alert the user if location services is disabled.
-     *
+     * <p>
      * As of Android 11 (API 30) there is a more accurate way of getting the current location of the
      * device, however, the process is slower as it needs to actually make a call to the GPS service
-     * if the location has not been updated recently. This newer call made the app look slow at
-     * startup, therefore, I added a splash screen and a Toast to let the user know that the app
-     * is working.
-     *
-     * Since version 2.0 of the app, this method will now first check if the user wants to use a
-     * zip code. If the user entered a zip code before, the app will use that zip code for as the
-     * current location.
+     * if the location has not been updated recently.
+     * <p>
+     * This method will now first check if the user wants to use a zip code. If the user entered a
+     * zip code before, the app will use that zip code for as the current location.
      */
     @SuppressWarnings("BusyWait")
-    private void getLatitudeAndLongitude() {
-        if (mSharedPreferences.getBoolean("useZipcode",false)) {
+    public void acquireLatitudeAndLongitude() {
+        if (mSharedPreferences.getBoolean("useZipcode", false)) {
             getLatitudeAndLongitudeFromZipcode();
         } else {
             if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{ACCESS_FINE_LOCATION}, 1);
+                ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION}, 1);
             } else {
                 try {
-                    LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
                     if (locationManager != null) {
                         if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                             mNetworkLocationServiceIsDisabled = true;
@@ -276,39 +285,45 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                             mGPSLocationServiceIsDisabled = true;
                         }
+                        LocationListener locationListener = new LocationListener() {
+                            @Override
+                            public void onLocationChanged(@NonNull Location location) { }
+                            @Override
+                            public void onProviderEnabled(@NonNull String provider) { }
+                            @Override
+                            public void onProviderDisabled(@NonNull String provider) { }
+                            @Override
+                            public void onStatusChanged(String provider, int status, Bundle extras) { }
+                        };
                         if (!mNetworkLocationServiceIsDisabled) {
-                            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 2000, this);
-                        } else if (!mGPSLocationServiceIsDisabled) {
-                            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 2000, this);
+                            locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, locationListener, null);
+                        }
+                        if (!mGPSLocationServiceIsDisabled) {
+                            locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, null);
                         }
                         if (!mNetworkLocationServiceIsDisabled || !mGPSLocationServiceIsDisabled) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {//newer implementation
                                 locationManager.getCurrentLocation(LocationManager.NETWORK_PROVIDER,
-                                        new CancellationSignal(),
-                                        Runnable::run,
+                                        null, Runnable::run,
                                         location -> {
                                             if (location != null) {
-                                                mLatitude = location.getLatitude();
-                                                mLongitude = location.getLongitude();
+                                                sLatitude = location.getLatitude();
+                                                sLongitude = location.getLongitude();
                                             }
                                         });
                                 locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER,
-                                        new CancellationSignal(),
-                                        Runnable::run,
+                                        null, Runnable::run,
                                         location -> {
                                             if (location != null) {
-                                                mLatitude = location.getLatitude();
-                                                mLongitude = location.getLongitude();
+                                                sLatitude = location.getLatitude();
+                                                sLongitude = location.getLongitude();
                                             }
                                         });
-                                Toast.makeText(MainActivity.this,
-                                        "Trying to acquire your location...", Toast.LENGTH_LONG)
-                                        .show();//show a toast in order for the user to know that the app is working
                                 long tenSeconds = System.currentTimeMillis() + 10000;
-                                while (mLatitude == 0 && mLongitude == 0 && System.currentTimeMillis() < tenSeconds) {
+                                while ((sLatitude == 0 && sLongitude == 0) && System.currentTimeMillis() < tenSeconds) {
                                     Thread.sleep(0);//we MUST wait for the location data to be set or else the app will crash
                                 }
-                                if (mLatitude == 0 && mLongitude == 0) {//if 10 seconds passed and we still don't have the location, use the older implementation
+                                if (sLatitude == 0 && sLongitude == 0) {//if 10 seconds passed and we still don't have the location, use the older implementation
                                     Location location;//location might be old
                                     if (!mNetworkLocationServiceIsDisabled) {
                                         location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -316,20 +331,25 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                         location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                                     }
                                     if (location != null) {
-                                        mLatitude = location.getLatitude();
-                                        mLongitude = location.getLongitude();
+                                        sLatitude = location.getLatitude();
+                                        sLongitude = location.getLongitude();
                                     }
                                 }
                             } else {//older implementation
-                                Location location;//location might be old
+                                Location location = null;//location might be old
                                 if (!mNetworkLocationServiceIsDisabled) {
                                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                                } else {
-                                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                                 }
                                 if (location != null) {
-                                    mLatitude = location.getLatitude();
-                                    mLongitude = location.getLongitude();
+                                    sLatitude = location.getLatitude();
+                                    sLongitude = location.getLongitude();
+                                }
+                                if (!mGPSLocationServiceIsDisabled) {
+                                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                                }
+                                if (location != null && (sLatitude == 0 && sLongitude == 0)) {
+                                    sLatitude = location.getLatitude();
+                                    sLongitude = location.getLongitude();
                                 }
                             }
                         }
@@ -343,16 +363,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     private void resolveCurrentLocationName() {
-        mCurrentLocation = getLocationAsName();
-        if (mCurrentLocation.isEmpty()) {
-            if (mLatitude != 0 && mLongitude != 0) {
-                String lat = String.valueOf(mLatitude).substring(0, 4);
-                String longitude = String.valueOf(mLongitude).substring(0, 5);
-                mCurrentLocation = "Lat: " + lat + " Long: " + longitude;
+        sCurrentLocation = getLocationAsName();
+        if (sCurrentLocation.isEmpty()) {
+            if (sLatitude != 0 && sLongitude != 0) {
+                String lat = String.valueOf(sLatitude).substring(0, 4);
+                String longitude = String.valueOf(sLongitude).substring(0, 5);
+                sCurrentLocation = "Lat: " + lat + " Long: " + longitude;
             }
-        }
-        if (!mCurrentLocation.isEmpty()) {
-            Toast.makeText(MainActivity.this, mCurrentLocation, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -365,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                                            @NonNull @NotNull int[] grantResults) {
         if (requestCode == 1) {
             if (permissions.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
-                getLatitudeAndLongitude();
+                acquireLatitudeAndLongitude();
                 if (!initialized) {
                     initializeViews();
                 }
@@ -388,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 .setTitle(R.string.title_location_permission)
                 .setMessage(R.string.text_location_permission)
                 .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
-                    getLatitudeAndLongitude();//restart
+                    acquireLatitudeAndLongitude();//restart
                 })
                 .setNeutralButton(R.string.zipcode, (dialogInterface, i) -> createZipcodeDialog())
                 .setCancelable(false)
@@ -435,7 +452,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 .setNeutralButton("Use location", (dialog, which) -> {
                     SharedPreferences.Editor editor = mSharedPreferences.edit();
                     editor.putBoolean("useZipcode", false).apply();
-                    getLatitudeAndLongitude();
+                    acquireLatitudeAndLongitude();
                     setGeoLocationData();
                     startSetupIfNeeded();
                     mNavController.navigate(R.id.navigation_today);
@@ -461,14 +478,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
         if ((address != null ? address.size() : 0) > 0) {
             Address first = address.get(0);
-            mLatitude = first.getLatitude();
-            mLongitude = first.getLongitude();
-            mCurrentLocation = getLocationAsName();
-            Toast.makeText(MainActivity.this, mCurrentLocation, Toast.LENGTH_LONG)
+            sLatitude = first.getLatitude();
+            sLongitude = first.getLongitude();
+            sCurrentLocation = getLocationAsName();
+            Toast.makeText(MainActivity.this, sCurrentLocation, Toast.LENGTH_LONG)
                     .show();
-            mSharedPreferences.edit().putLong("lat", Double.doubleToRawLongBits(mLatitude))
+            mSharedPreferences.edit().putLong("lat", Double.doubleToRawLongBits(sLatitude))
                     .apply();
-            mSharedPreferences.edit().putLong("long", Double.doubleToRawLongBits(mLongitude))
+            mSharedPreferences.edit().putLong("long", Double.doubleToRawLongBits(sLongitude))
                     .apply();
         } else {
             getOldZipcodeLocation();
@@ -484,14 +501,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         double oldLat = Double.longBitsToDouble(mSharedPreferences.getLong("lat", 0));
         double oldLong = Double.longBitsToDouble(mSharedPreferences.getLong("long",0));
 
-        if (oldLat == mLatitude && oldLong == mLongitude) {
+        if (oldLat == sLatitude && oldLong == sLongitude) {
             Toast.makeText(MainActivity.this,
                     "Unable to change location, using old location.", Toast.LENGTH_LONG).show();
         }
 
         if (oldLat != 0 && oldLong != 0) {
-            mLatitude = oldLat;
-            mLongitude = oldLong;
+            sLatitude = oldLat;
+            sLongitude = oldLong;
         } else {
             Toast.makeText(MainActivity.this,
                     "An error occurred getting zipcode coordinates", Toast.LENGTH_LONG).show();
@@ -508,7 +525,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.enterZipcode) {
+        if (id == R.id.refresh) {
+            acquireLatitudeAndLongitude();
+            setTimeZoneID();
+            setGeoLocationData();
+            mLocationResolver.start();
+            try {
+                mLocationResolver.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            mLocationResolver = new LocationResolver(this);
+            startSetupIfNeeded();
+            mNavController.navigate(R.id.navigation_today);
+        } else if (id == R.id.enterZipcode) {
             createZipcodeDialog();
             return true;
         } else if (id == R.id.RerunSetup) {

@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 32
 
     defaultConfig {
         applicationId "com.EJ.rabbeinutam"
         minSdkVersion 23
-        targetSdkVersion 30
-        versionCode 14
-        versionName "3.0"
+        targetSdkVersion 32
+        versionCode 15
+        versionName "4.0"
 
         ndk { debugSymbolLevel 'FULL' }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -43,8 +43,8 @@ dependencies {
         exclude group: 'com.github.luben', module: 'zstd-jni'
     }
     implementation 'com.github.luben:zstd-jni:1.5.0-2@aar'
-    implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'androidx.preference:preference:1.1.1'
+    implementation files('libs/geonames-ws-client-1.1.9.jar')//local file in libs folder
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'

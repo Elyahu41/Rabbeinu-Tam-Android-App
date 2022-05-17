@@ -1,5 +1,7 @@
 package com.elyjacobi.rabbeinutam.ui.today;
 
+import static com.elyjacobi.rabbeinutam.RTCalendar.ONE_MINUTE_IN_MILLI;
+
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -19,8 +21,6 @@ import com.elyjacobi.rabbeinutam.RTCalendar;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import static com.elyjacobi.rabbeinutam.RTCalendar.ONE_MINUTE_IN_MILLI;
 
 public class TodayFragment extends Fragment {
 
@@ -44,7 +44,7 @@ public class TodayFragment extends Fragment {
         mDateFormatter = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
         mTimeFormatter = new SimpleDateFormat("h:mm aa", Locale.getDefault());
         updateDateAndTime();
-        mTodayViewModel.setText("Rabbeinu Tam for today " + "(" + mDate + ") is at: \n" + mTime);
+        mTodayViewModel.setText("Rabbeinu Tam for today " + "(" + mDate + ") is at: \n\n" + mTime);
         mTodayViewModel.getText().observe(getViewLifecycleOwner(), result::setText);
         mSunset.setText(String.format("Sunset is at: %s", mSunsetTime));
         return root;

@@ -1,9 +1,11 @@
 package com.elyjacobi.rabbeinutam.Activities;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -43,16 +45,24 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
-            Preference contactUsPref = findPreference(getResources()
-                    .getString(R.string.contact_header));
+            Preference contactUsPref = findPreference(getResources().getString(R.string.contact_header));
+
+            PackageManager packageManager = requireActivity().getPackageManager();
+
             if (contactUsPref != null) {
                 contactUsPref.setOnPreferenceClickListener(v -> {
                     Intent email = new Intent(Intent.ACTION_SENDTO);
                     email.setData(Uri.parse("mailto:"));
                     email.putExtra(Intent.EXTRA_EMAIL, new String[]{"elyahujacobi@gmail.com"}); //developer's email
-                    email.putExtra(Intent.EXTRA_SUBJECT,"Rabbeinu Tam Support Ticket"); //Email's Subject
+                    email.putExtra(Intent.EXTRA_SUBJECT,"Support Ticket"); //Email's Subject
                     email.putExtra(Intent.EXTRA_TEXT,"Dear Mr. Elyahu,"); //Email's Greeting text
-                    startActivity(email);
+
+                    if (packageManager.resolveActivity(email,0) != null) { // there is an activity that can handle it
+                        startActivity(email);
+                    } else {
+                        Toast.makeText(getContext(),"No email app...", Toast.LENGTH_SHORT)
+                                .show();
+                    }
                     return false;
                 });
             }
