@@ -9,4 +9,6 @@ that gathered this information for each city. In the app, you can choose to navi
 
 Click this link to download the app from the Play Store!: https://play.google.com/store/apps/details?id=com.EJ.rabbeinutam
 
+<a href="https://play.google.com/store/apps/details?id=com.EJ.rabbeinutam"><img class="android" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" width="250px"></a>
+
 ![alt text](https://play-lh.googleusercontent.com/O7t07S1VdNC2DUecr3cpSpZThhs_X1r9xmRaBLPFD2HNkfdn6k_4KUuVpm694DlgnzY=w720-h310-rw)
