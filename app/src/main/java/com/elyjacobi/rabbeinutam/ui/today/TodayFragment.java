@@ -62,62 +62,32 @@ public class TodayFragment extends Fragment {
     private void updateDateAndTime() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
         String opinion = prefs.getString("opinion", "");
-        if (opinion != null) {
-            Date userChosenOpinion;
-            switch (opinion) {
-                case "90 zmaniyot minutes":
-                    userChosenOpinion = mRTCalendar.getTzais90Zmanis();
-                    break;
-                case "96 zmaniyot minutes":
-                    userChosenOpinion = mRTCalendar.getTzais96Zmanis();
-                    break;
-                case "120 zmaniyot minutes":
-                    userChosenOpinion = mRTCalendar.getTzais120Zmanis();
-                    break;
-                case "50 regular minutes (NY Only)":
-                    userChosenOpinion = mRTCalendar.getTzais50();
-                    break;
-                case "60 regular minutes":
-                    userChosenOpinion = mRTCalendar.getTzais60();
-                    break;
-                case "72 regular minutes":
-                    userChosenOpinion = mRTCalendar.getTzais72();
-                    break;
-                case "90 regular minutes":
-                    userChosenOpinion = mRTCalendar.getTzais90();
-                    break;
-                case "96 regular minutes":
-                    userChosenOpinion = mRTCalendar.getTzais96();
-                    break;
-                case "120 regular minutes":
-                    userChosenOpinion = mRTCalendar.getTzais120();
-                    break;
-                case "16.1 degrees":
-                    userChosenOpinion = mRTCalendar.getTzais16Point1Degrees();
-                    break;
-                case "18 degrees":
-                    userChosenOpinion = mRTCalendar.getTzais18Degrees();
-                    break;
-                case "19.8 degrees":
-                    userChosenOpinion = mRTCalendar.getTzais19Point8Degrees();
-                    break;
-                case "26 degrees":
-                    userChosenOpinion = mRTCalendar.getTzais26Degrees();
-                    break;
-                default: // by default we refer to 72 zmaniyot minutes
-                    userChosenOpinion = mRTCalendar.getTzais72Zmanis();
-                    break;
-            }
-            Date sunset = mRTCalendar.getSunset();
-            mSunsetTime = mTimeFormatter.format(sunset);
-            if (userChosenOpinion != null) {
-                userChosenOpinion = new Date(userChosenOpinion.getTime() + ONE_MINUTE_IN_MILLI);//round up to the nearest minute
-                mDate = mDateFormatter.format(userChosenOpinion);
-                mTime = mTimeFormatter.format(userChosenOpinion);
-            } else {
-                mDate = mDateFormatter.format(sunset);
-                mTime = "Not Available";
-            }
+        Date userChosenOpinion = switch (opinion) {
+            case "90 zmaniyot minutes" -> mRTCalendar.getTzais90Zmanis();
+            case "96 zmaniyot minutes" -> mRTCalendar.getTzais96Zmanis();
+            case "120 zmaniyot minutes" -> mRTCalendar.getTzais120Zmanis();
+            case "50 regular minutes (NY Only)" -> mRTCalendar.getTzais50();
+            case "60 regular minutes" -> mRTCalendar.getTzais60();
+            case "72 regular minutes" -> mRTCalendar.getTzais72();
+            case "90 regular minutes" -> mRTCalendar.getTzais90();
+            case "96 regular minutes" -> mRTCalendar.getTzais96();
+            case "120 regular minutes" -> mRTCalendar.getTzais120();
+            case "16.1 degrees" -> mRTCalendar.getTzais16Point1Degrees();
+            case "18 degrees" -> mRTCalendar.getTzais18Degrees();
+            case "19.8 degrees" -> mRTCalendar.getTzais19Point8Degrees();
+            case "26 degrees" -> mRTCalendar.getTzais26Degrees();
+            default -> // by default we refer to 72 zmaniyot minutes
+                    mRTCalendar.getTzais72Zmanis();
+        };
+        Date sunset = mRTCalendar.getSunset();
+        mSunsetTime = mTimeFormatter.format(sunset);
+        if (userChosenOpinion != null) {
+            userChosenOpinion = new Date(userChosenOpinion.getTime() + ONE_MINUTE_IN_MILLI);//round up to the nearest minute
+            mDate = mDateFormatter.format(userChosenOpinion);
+            mTime = mTimeFormatter.format(userChosenOpinion);
+        } else {
+            mDate = mDateFormatter.format(sunset);
+            mTime = "Not Available";
         }
     }
 }

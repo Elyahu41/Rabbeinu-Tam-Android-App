@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK){
                         if (result.getData() != null) {
-                            mElevation = Double.parseDouble(result.getData().getStringExtra("elevation"));
+                            mElevation = Double.parseDouble(Objects.requireNonNull(result.getData().getStringExtra("elevation")));
                         }
                         SharedPreferences.Editor editor = mSharedPreferences.edit();
                         editor.putString("lastLocation", sCurrentLocation).apply();
@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (addresses != null && addresses.size() > 0) {
+        if (addresses != null && !addresses.isEmpty()) {
 
             String city = addresses.get(0).getLocality();
             if (city != null) { result.append(city).append(", "); }
@@ -379,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions,
-                                           @NonNull @NotNull int[] grantResults) {
+                                           @NonNull int[] grantResults) {
         if (requestCode == 1) {
             if (permissions.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
                 acquireLatitudeAndLongitude();
@@ -566,16 +566,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     @Override
-    public void onLocationChanged(Location location) { }
+    public void onLocationChanged(@NonNull Location location) { }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) { }
 
     @Override
-    public void onProviderEnabled(String provider) { }
+    public void onProviderEnabled(@NonNull String provider) { }
 
     @Override
-    public void onProviderDisabled(String provider) {
+    public void onProviderDisabled(@NonNull String provider) {
         Toast.makeText(MainActivity.this, "Please Enable GPS", Toast.LENGTH_SHORT)
                 .show();
     }
